@@ -1,10 +1,11 @@
 package pgmock
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
+
+	"github.com/jackc/pgmock/pgmsg"
 )
 
 const (
@@ -15,8 +16,6 @@ const (
 type MockConn struct {
 	pgConn io.ReadWriteCloser
 }
-
-type startupMsg map[string]string
 
 func NewMockConn(pgConn io.ReadWriteCloser) *MockConn {
 	return &MockConn{
@@ -40,61 +39,24 @@ func (mc *MockConn) Run() error {
 
 }
 
-func (mc *MockConn) acceptStartupMessage() (startupMsg, error) {
-	buf := make([]byte, 8)
+func (mc *MockConn) acceptStartupMessage() (*pgmsg.StartupMessage, error) {
+	buf := make([]byte, 4)
 
 	_, err := io.ReadFull(mc.pgConn, buf)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println(buf)
+	msgSize := int(binary.BigEndian.Uint32(buf[:4]))
+	fmt.Println("msgSize", msgSize)
 
-	msgSize := int32(binary.BigEndian.Uint32(buf[:4]))
-	clientProtocalVersionNumber := int32(binary.BigEndian.Uint32(buf[4:8]))
-
-	if clientProtocalVersionNumber == sslRequestNumber {
-		return nil, fmt.Errorf("can't handle ssl connection request")
-	}
-
-	if clientProtocalVersionNumber != protocolVersionNumber {
-		return nil, fmt.Errorf("Bad startup message version number. Expected %d, got %d", protocolVersionNumber, clientProtocalVersionNumber)
-	}
-
-	buf = make([]byte, int(msgSize-8))
+	buf = make([]byte, msgSize-4)
 	_, err = io.ReadFull(mc.pgConn, buf)
 	if err != nil {
 		return nil, err
 	}
-
-	reader := bytes.NewBuffer(buf)
-
-	startupMsg := make(startupMsg)
-	for {
-		key, err := reader.ReadBytes(0)
-		if err != nil {
-			return nil, err
-		}
-		value, err := reader.ReadBytes(0)
-		if err != nil {
-			return nil, err
-		}
-
-		startupMsg[string(key[:len(key)-1])] = string(value[:len(value)-1])
-
-		if reader.Len() == 1 {
-			b, err := reader.ReadByte()
-			if err != nil {
-				return nil, err
-			}
-			if b != 0 {
-				return nil, fmt.Errorf("Bad startup message last byte. Expected 0, got %d", b)
-			}
-			break
-		}
-	}
-
-	return startupMsg, nil
+	fmt.Println(buf)
+	return pgmsg.ParseStartupMessage(buf)
 }
 
 func (mc *MockConn) respondWithAuthenticationOk() error {
