@@ -2,6 +2,7 @@ package pgmsg
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"io"
 )
@@ -35,5 +36,11 @@ func (um *UnknownMessage) WriteTo(w io.Writer) (int64, error) {
 }
 
 func (um *UnknownMessage) MarshalJSON() ([]byte, error) {
-	return json.Marshal(um)
+	return json.Marshal(struct {
+		Type    string
+		Payload string
+	}{
+		Type:    string(um.Type),
+		Payload: hex.EncodeToString(um.Payload),
+	})
 }

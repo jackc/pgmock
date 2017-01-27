@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -33,27 +34,46 @@ func NewProxy(clientConn, serverConn net.Conn) *Proxy {
 }
 
 func (p *Proxy) Run() error {
-	clientErrChan := make(chan error)
-	go p.readClientConn(clientErrChan)
+	defer p.Close()
 
-	serverErrChan := make(chan error)
-	go p.readServerConn(serverErrChan)
+	clientErrChan := make(chan error, 1)
+	clientMsgChan := make(chan pgmsg.Message)
+	go p.readClientConn(clientMsgChan, clientErrChan)
 
-	var clientErr, serverErr error
+	serverErrChan := make(chan error, 1)
+	serverMsgChan := make(chan pgmsg.Message)
+	go p.readServerConn(serverMsgChan, serverErrChan)
 
-	select {
-	case clientErr = <-clientErrChan:
-		p.Close()
-		serverErr = <-serverErrChan
-	case serverErr = <-serverErrChan:
-		p.Close()
-		clientErr = <-clientErrChan
+	for {
+		select {
+		case msg := <-clientMsgChan:
+			buf, err := json.Marshal(msg)
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(buf))
+
+			_, err = msg.WriteTo(p.serverConn)
+			if err != nil {
+				return err
+			}
+		case msg := <-serverMsgChan:
+			buf, err := json.Marshal(msg)
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(buf))
+
+			_, err = msg.WriteTo(p.clientConn)
+			if err != nil {
+				return err
+			}
+		case err := <-clientErrChan:
+			return err
+		case err := <-serverErrChan:
+			return err
+		}
 	}
-
-	if clientErr != nil {
-		return clientErr
-	}
-	return serverErr
 }
 
 func (p *Proxy) Close() error {
@@ -66,20 +86,16 @@ func (p *Proxy) Close() error {
 	return serverCloseErr
 }
 
-func (p *Proxy) readClientConn(errChan chan error) {
+func (p *Proxy) readClientConn(msgChan chan pgmsg.Message, errChan chan error) {
 	startupMessage, err := p.acceptStartupMessage()
 	if err != nil {
 		errChan <- err
 		return
 	}
 
-	_, err = startupMessage.WriteTo(p.serverConn)
-	if err != nil {
-		errChan <- err
-		return
-	}
+	msgChan <- startupMessage
 
-	p.relay(p.serverConn, p.clientReader, errChan)
+	p.relay(p.clientReader, msgChan, errChan)
 }
 
 func (p *Proxy) acceptStartupMessage() (*pgmsg.StartupMessage, error) {
@@ -102,11 +118,11 @@ func (p *Proxy) acceptStartupMessage() (*pgmsg.StartupMessage, error) {
 }
 
 // TODO - probably can DRY main loop for readServerConn and readClientConn
-func (p *Proxy) readServerConn(errChan chan error) {
-	p.relay(p.clientConn, p.serverReader, errChan)
+func (p *Proxy) readServerConn(msgChan chan pgmsg.Message, errChan chan error) {
+	p.relay(p.serverReader, msgChan, errChan)
 }
 
-func (p *Proxy) relay(dst io.Writer, src io.Reader, errChan chan error) {
+func (p *Proxy) relay(src io.Reader, msgChan chan pgmsg.Message, errChan chan error) {
 	header := make([]byte, 5)
 	payload := &bytes.Buffer{}
 	for {
@@ -123,20 +139,17 @@ func (p *Proxy) relay(dst io.Writer, src io.Reader, errChan chan error) {
 			return
 		}
 
+		var msg pgmsg.Message
 		switch header[0] {
 		default:
-			um, err := pgmsg.ParseUnknownMessage(header[0], payload.Bytes())
-			if err != nil {
-				errChan <- err
-				return
-			}
-
-			_, err = um.WriteTo(dst)
+			msg, err = pgmsg.ParseUnknownMessage(header[0], payload.Bytes())
 			if err != nil {
 				errChan <- err
 				return
 			}
 		}
+
+		msgChan <- msg
 
 		payload.Reset()
 	}

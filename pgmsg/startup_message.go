@@ -89,5 +89,13 @@ func (sm *StartupMessage) WriteTo(w io.Writer) (int64, error) {
 }
 
 func (sm *StartupMessage) MarshalJSON() ([]byte, error) {
-	return json.Marshal(sm)
+	return json.Marshal(struct {
+		Type            string
+		ProtocolVersion uint32
+		Parameters      map[string]string
+	}{
+		Type:            "StartupMessage",
+		ProtocolVersion: sm.ProtocolVersion,
+		Parameters:      sm.Parameters,
+	})
 }
