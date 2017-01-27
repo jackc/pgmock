@@ -3,7 +3,9 @@ package pgmsg
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
+	"io"
 )
 
 const (
@@ -12,14 +14,14 @@ const (
 )
 
 type StartupMessage struct {
-	ProtocolVersion int32
+	ProtocolVersion uint32
 	Parameters      map[string]string
 }
 
 func ParseStartupMessage(buf []byte) (*StartupMessage, error) {
 	var msg StartupMessage
 
-	msg.ProtocolVersion = int32(binary.BigEndian.Uint32(buf[:4]))
+	msg.ProtocolVersion = binary.BigEndian.Uint32(buf[:4])
 	if msg.ProtocolVersion == sslRequestNumber {
 		return nil, fmt.Errorf("can't handle ssl connection request")
 	}
@@ -56,4 +58,36 @@ func ParseStartupMessage(buf []byte) (*StartupMessage, error) {
 	}
 
 	return &msg, nil
+}
+
+func (sm *StartupMessage) Encode() ([]byte, error) {
+	var bigEndian BigEndianBuf
+	buf := &bytes.Buffer{}
+	buf.Write(bigEndian.Uint32(0))
+	buf.Write(bigEndian.Uint32(sm.ProtocolVersion))
+	for k, v := range sm.Parameters {
+		buf.WriteString(k)
+		buf.WriteByte(0)
+		buf.WriteString(v)
+		buf.WriteByte(0)
+	}
+	buf.WriteByte(0)
+
+	binary.BigEndian.PutUint32(buf.Bytes()[0:4], uint32(buf.Len()))
+
+	return buf.Bytes(), nil
+}
+
+func (sm *StartupMessage) WriteTo(w io.Writer) (int64, error) {
+	buf, err := sm.Encode()
+	if err != nil {
+		return 0, err
+	}
+
+	n, err := w.Write(buf)
+	return int64(n), err
+}
+
+func (sm *StartupMessage) MarshalJSON() ([]byte, error) {
+	return json.Marshal(sm)
 }
