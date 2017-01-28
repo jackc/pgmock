@@ -13,7 +13,9 @@ type UnknownMessage struct {
 }
 
 func ParseUnknownMessage(t byte, buf []byte) (*UnknownMessage, error) {
-	return &UnknownMessage{Type: t, Payload: buf}, nil
+	newBuf := make([]byte, len(buf))
+	copy(newBuf, buf)
+	return &UnknownMessage{Type: t, Payload: newBuf}, nil
 }
 
 func (um *UnknownMessage) Encode() ([]byte, error) {

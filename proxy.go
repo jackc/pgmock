@@ -20,8 +20,6 @@ type Proxy struct {
 	serverReader *bufio.Reader
 }
 
-type DialFunc func() (net.Conn, error)
-
 func NewProxy(clientConn, serverConn net.Conn) *Proxy {
 	proxy := &Proxy{
 		clientConn:   clientConn,
@@ -47,24 +45,38 @@ func (p *Proxy) Run() error {
 	for {
 		select {
 		case msg := <-clientMsgChan:
+			fmt.Println("rx from client")
 			buf, err := json.Marshal(msg)
 			if err != nil {
 				return err
 			}
 			fmt.Println(string(buf))
 
-			_, err = msg.WriteTo(p.serverConn)
+			buf, err = msg.Encode()
+			if err != nil {
+				return err
+			}
+			fmt.Println(buf)
+
+			_, err = p.serverConn.Write(buf)
 			if err != nil {
 				return err
 			}
 		case msg := <-serverMsgChan:
+			fmt.Println("rx from server")
 			buf, err := json.Marshal(msg)
 			if err != nil {
 				return err
 			}
 			fmt.Println(string(buf))
 
-			_, err = msg.WriteTo(p.clientConn)
+			buf, err = msg.Encode()
+			if err != nil {
+				return err
+			}
+			fmt.Println(buf)
+
+			_, err = p.clientConn.Write(buf)
 			if err != nil {
 				return err
 			}
@@ -141,6 +153,24 @@ func (p *Proxy) relay(src io.Reader, msgChan chan pgmsg.Message, errChan chan er
 
 		var msg pgmsg.Message
 		switch header[0] {
+		case 'R':
+			msg, err = pgmsg.ParseAuthentication(header[0], payload.Bytes())
+			if err != nil {
+				errChan <- err
+				return
+			}
+		case 'E':
+			msg, err = pgmsg.ParseErrorResponse(header[0], payload.Bytes())
+			if err != nil {
+				errChan <- err
+				return
+			}
+		case 'S':
+			msg, err = pgmsg.ParseParameterStatus(header[0], payload.Bytes())
+			if err != nil {
+				errChan <- err
+				return
+			}
 		default:
 			msg, err = pgmsg.ParseUnknownMessage(header[0], payload.Bytes())
 			if err != nil {

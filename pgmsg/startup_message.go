@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"io"
 )
 
 const (
@@ -76,16 +75,6 @@ func (sm *StartupMessage) Encode() ([]byte, error) {
 	binary.BigEndian.PutUint32(buf.Bytes()[0:4], uint32(buf.Len()))
 
 	return buf.Bytes(), nil
-}
-
-func (sm *StartupMessage) WriteTo(w io.Writer) (int64, error) {
-	buf, err := sm.Encode()
-	if err != nil {
-		return 0, err
-	}
-
-	n, err := w.Write(buf)
-	return int64(n), err
 }
 
 func (sm *StartupMessage) MarshalJSON() ([]byte, error) {
