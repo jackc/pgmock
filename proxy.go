@@ -169,6 +169,12 @@ func (p *Proxy) relay(src io.Reader, msgChan chan pgmsg.Message, errChan chan er
 				errChan <- err
 				return
 			}
+		case 'p':
+			msg, err = pgmsg.ParsePasswordMessage(header[0], payload.Bytes())
+			if err != nil {
+				errChan <- err
+				return
+			}
 		default:
 			msg, err = pgmsg.ParseUnknownMessage(header[0], payload.Bytes())
 			if err != nil {
