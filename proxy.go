@@ -149,38 +149,10 @@ func (p *Proxy) relay(src io.Reader, msgChan chan pgmsg.Message, errChan chan er
 			return
 		}
 
-		var msg pgmsg.Message
-		switch header[0] {
-		case 'R':
-			msg, err = pgmsg.ParseAuthentication(header[0], payload.Bytes())
-			if err != nil {
-				errChan <- err
-				return
-			}
-		case 'E':
-			msg, err = pgmsg.ParseErrorResponse(header[0], payload.Bytes())
-			if err != nil {
-				errChan <- err
-				return
-			}
-		case 'S':
-			msg, err = pgmsg.ParseParameterStatus(header[0], payload.Bytes())
-			if err != nil {
-				errChan <- err
-				return
-			}
-		case 'p':
-			msg, err = pgmsg.ParsePasswordMessage(header[0], payload.Bytes())
-			if err != nil {
-				errChan <- err
-				return
-			}
-		default:
-			msg, err = pgmsg.ParseUnknownMessage(header[0], payload.Bytes())
-			if err != nil {
-				errChan <- err
-				return
-			}
+		msg, err := pgmsg.Parse(header[0], payload.Bytes())
+		if err != nil {
+			errChan <- err
+			return
 		}
 
 		msgChan <- msg
