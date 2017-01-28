@@ -45,7 +45,7 @@ func (p *Proxy) Run() error {
 	for {
 		select {
 		case msg := <-clientMsgChan:
-			fmt.Println("rx from client")
+			fmt.Print("client: ")
 			buf, err := json.Marshal(msg)
 			if err != nil {
 				return err
@@ -56,14 +56,13 @@ func (p *Proxy) Run() error {
 			if err != nil {
 				return err
 			}
-			fmt.Println(buf)
 
 			_, err = p.serverConn.Write(buf)
 			if err != nil {
 				return err
 			}
 		case msg := <-serverMsgChan:
-			fmt.Println("rx from server")
+			fmt.Print("server: ")
 			buf, err := json.Marshal(msg)
 			if err != nil {
 				return err
@@ -74,7 +73,6 @@ func (p *Proxy) Run() error {
 			if err != nil {
 				return err
 			}
-			fmt.Println(buf)
 
 			_, err = p.clientConn.Write(buf)
 			if err != nil {
