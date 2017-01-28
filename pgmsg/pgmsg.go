@@ -8,22 +8,29 @@ type Message interface {
 	Encode() ([]byte, error)
 }
 
-func Parse(typeByte byte, body []byte) (Message, error) {
+func ParseBackend(typeByte byte, body []byte) (Message, error) {
 	switch typeByte {
 	case 'E':
 		return ParseErrorResponse(body)
 	case 'K':
 		return ParseBackendKeyData(body)
-	case 'p':
-		return ParsePasswordMessage(body)
 	case 'R':
 		return ParseAuthentication(body)
 	case 'S':
 		return ParseParameterStatus(body)
-	case 'X':
-		return ParseTerminate(body)
 	case 'Z':
 		return ParseReadyForQuery(body)
+	default:
+		return ParseUnknownMessage(typeByte, body)
+	}
+}
+
+func ParseFrontend(typeByte byte, body []byte) (Message, error) {
+	switch typeByte {
+	case 'p':
+		return ParsePasswordMessage(body)
+	case 'X':
+		return ParseTerminate(body)
 	default:
 		return ParseUnknownMessage(typeByte, body)
 	}

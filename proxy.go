@@ -105,7 +105,7 @@ func (p *Proxy) readClientConn(msgChan chan pgmsg.Message, errChan chan error) {
 
 	msgChan <- startupMessage
 
-	p.relay(p.clientReader, msgChan, errChan)
+	p.relay(p.clientReader, msgChan, errChan, pgmsg.ParseFrontend)
 }
 
 func (p *Proxy) acceptStartupMessage() (*pgmsg.StartupMessage, error) {
@@ -127,12 +127,11 @@ func (p *Proxy) acceptStartupMessage() (*pgmsg.StartupMessage, error) {
 	return pgmsg.ParseStartupMessage(buf)
 }
 
-// TODO - probably can DRY main loop for readServerConn and readClientConn
 func (p *Proxy) readServerConn(msgChan chan pgmsg.Message, errChan chan error) {
-	p.relay(p.serverReader, msgChan, errChan)
+	p.relay(p.serverReader, msgChan, errChan, pgmsg.ParseBackend)
 }
 
-func (p *Proxy) relay(src io.Reader, msgChan chan pgmsg.Message, errChan chan error) {
+func (p *Proxy) relay(src io.Reader, msgChan chan pgmsg.Message, errChan chan error, parseFunc func(byte, []byte) (pgmsg.Message, error)) {
 	header := make([]byte, 5)
 	payload := &bytes.Buffer{}
 	for {
@@ -149,7 +148,7 @@ func (p *Proxy) relay(src io.Reader, msgChan chan pgmsg.Message, errChan chan er
 			return
 		}
 
-		msg, err := pgmsg.Parse(header[0], payload.Bytes())
+		msg, err := parseFunc(header[0], payload.Bytes())
 		if err != nil {
 			errChan <- err
 			return
