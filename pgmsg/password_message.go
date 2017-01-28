@@ -9,7 +9,7 @@ type PasswordMessage struct {
 	Password string
 }
 
-func ParsePasswordMessage(t byte, body []byte) (*PasswordMessage, error) {
+func ParsePasswordMessage(body []byte) (*PasswordMessage, error) {
 	var pm PasswordMessage
 
 	buf := bytes.NewBuffer(body)

@@ -11,7 +11,7 @@ type ParameterStatus struct {
 	Value string
 }
 
-func ParseParameterStatus(t byte, rawBuf []byte) (*ParameterStatus, error) {
+func ParseParameterStatus(rawBuf []byte) (*ParameterStatus, error) {
 	var ps ParameterStatus
 
 	buf := bytes.NewBuffer(rawBuf)

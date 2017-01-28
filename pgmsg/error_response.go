@@ -28,7 +28,7 @@ type ErrorResponse struct {
 	UnknownFields map[byte]string
 }
 
-func ParseErrorResponse(t byte, rawBuf []byte) (*ErrorResponse, error) {
+func ParseErrorResponse(rawBuf []byte) (*ErrorResponse, error) {
 	var errResp ErrorResponse
 
 	buf := bytes.NewBuffer(rawBuf)

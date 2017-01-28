@@ -11,15 +11,15 @@ type Message interface {
 func Parse(typeByte byte, body []byte) (Message, error) {
 	switch typeByte {
 	case 'E':
-		return ParseErrorResponse(typeByte, body)
+		return ParseErrorResponse(body)
 	case 'K':
-		return ParseBackendKeyData(typeByte, body)
+		return ParseBackendKeyData(body)
 	case 'p':
-		return ParsePasswordMessage(typeByte, body)
+		return ParsePasswordMessage(body)
 	case 'R':
-		return ParseAuthentication(typeByte, body)
+		return ParseAuthentication(body)
 	case 'S':
-		return ParseParameterStatus(typeByte, body)
+		return ParseParameterStatus(body)
 	default:
 		return ParseUnknownMessage(typeByte, body)
 	}

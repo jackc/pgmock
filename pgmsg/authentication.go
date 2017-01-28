@@ -19,7 +19,7 @@ type AuthenticationMD5Password struct {
 	Salt [4]byte
 }
 
-func ParseAuthentication(t byte, buf []byte) (Message, error) {
+func ParseAuthentication(buf []byte) (Message, error) {
 	subType := binary.BigEndian.Uint32(buf[:4])
 
 	switch subType {
