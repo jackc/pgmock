@@ -20,6 +20,8 @@ func Parse(typeByte byte, body []byte) (Message, error) {
 		return ParseAuthentication(body)
 	case 'S':
 		return ParseParameterStatus(body)
+	case 'Z':
+		return ParseReadyForQuery(body)
 	default:
 		return ParseUnknownMessage(typeByte, body)
 	}
