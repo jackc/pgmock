@@ -13,19 +13,19 @@ import (
 )
 
 type Proxy struct {
-	clientConn   net.Conn
-	clientReader *bufio.Reader
+	frontendConn   net.Conn
+	frontendReader *bufio.Reader
 
-	serverConn   net.Conn
-	serverReader *bufio.Reader
+	backendConn   net.Conn
+	backendReader *bufio.Reader
 }
 
-func NewProxy(clientConn, serverConn net.Conn) *Proxy {
+func NewProxy(frontendConn, backendConn net.Conn) *Proxy {
 	proxy := &Proxy{
-		clientConn:   clientConn,
-		clientReader: bufio.NewReader(clientConn),
-		serverConn:   serverConn,
-		serverReader: bufio.NewReader(serverConn),
+		frontendConn:   frontendConn,
+		frontendReader: bufio.NewReader(frontendConn),
+		backendConn:    backendConn,
+		backendReader:  bufio.NewReader(backendConn),
 	}
 
 	return proxy
@@ -34,18 +34,18 @@ func NewProxy(clientConn, serverConn net.Conn) *Proxy {
 func (p *Proxy) Run() error {
 	defer p.Close()
 
-	clientErrChan := make(chan error, 1)
-	clientMsgChan := make(chan pgmsg.FrontendMessage)
-	go p.readClientConn(clientMsgChan, clientErrChan)
+	frontendErrChan := make(chan error, 1)
+	frontendMsgChan := make(chan pgmsg.FrontendMessage)
+	go p.readClientConn(frontendMsgChan, frontendErrChan)
 
-	serverErrChan := make(chan error, 1)
-	serverMsgChan := make(chan pgmsg.BackendMessage)
-	go p.readServerConn(serverMsgChan, serverErrChan)
+	backendErrChan := make(chan error, 1)
+	backendMsgChan := make(chan pgmsg.BackendMessage)
+	go p.readServerConn(backendMsgChan, backendErrChan)
 
 	for {
 		select {
-		case msg := <-clientMsgChan:
-			fmt.Print("client: ")
+		case msg := <-frontendMsgChan:
+			fmt.Print("frontend: ")
 			buf, err := json.Marshal(msg)
 			if err != nil {
 				return err
@@ -57,12 +57,12 @@ func (p *Proxy) Run() error {
 				return err
 			}
 
-			_, err = p.serverConn.Write(buf)
+			_, err = p.backendConn.Write(buf)
 			if err != nil {
 				return err
 			}
-		case msg := <-serverMsgChan:
-			fmt.Print("server: ")
+		case msg := <-backendMsgChan:
+			fmt.Print("backend: ")
 			buf, err := json.Marshal(msg)
 			if err != nil {
 				return err
@@ -74,26 +74,26 @@ func (p *Proxy) Run() error {
 				return err
 			}
 
-			_, err = p.clientConn.Write(buf)
+			_, err = p.frontendConn.Write(buf)
 			if err != nil {
 				return err
 			}
-		case err := <-clientErrChan:
+		case err := <-frontendErrChan:
 			return err
-		case err := <-serverErrChan:
+		case err := <-backendErrChan:
 			return err
 		}
 	}
 }
 
 func (p *Proxy) Close() error {
-	clientCloseErr := p.clientConn.Close()
-	serverCloseErr := p.serverConn.Close()
+	frontendCloseErr := p.frontendConn.Close()
+	backendCloseErr := p.backendConn.Close()
 
-	if clientCloseErr != nil {
-		return clientCloseErr
+	if frontendCloseErr != nil {
+		return frontendCloseErr
 	}
-	return serverCloseErr
+	return backendCloseErr
 }
 
 func (p *Proxy) readClientConn(msgChan chan pgmsg.FrontendMessage, errChan chan error) {
@@ -108,14 +108,14 @@ func (p *Proxy) readClientConn(msgChan chan pgmsg.FrontendMessage, errChan chan 
 	header := make([]byte, 5)
 	payload := &bytes.Buffer{}
 	for {
-		_, err := io.ReadFull(p.clientReader, header)
+		_, err := io.ReadFull(p.frontendReader, header)
 		if err != nil {
 			errChan <- err
 			return
 		}
 
 		msgSize := int(binary.BigEndian.Uint32(header[1:])) - 4
-		_, err = io.CopyN(payload, p.clientReader, int64(msgSize))
+		_, err = io.CopyN(payload, p.frontendReader, int64(msgSize))
 		if err != nil {
 			errChan <- err
 			return
@@ -136,7 +136,7 @@ func (p *Proxy) readClientConn(msgChan chan pgmsg.FrontendMessage, errChan chan 
 func (p *Proxy) acceptStartupMessage() (*pgmsg.StartupMessage, error) {
 	buf := make([]byte, 4)
 
-	_, err := io.ReadFull(p.clientReader, buf)
+	_, err := io.ReadFull(p.frontendReader, buf)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func (p *Proxy) acceptStartupMessage() (*pgmsg.StartupMessage, error) {
 	msgSize := int(binary.BigEndian.Uint32(buf))
 
 	buf = make([]byte, msgSize-4)
-	_, err = io.ReadFull(p.clientReader, buf)
+	_, err = io.ReadFull(p.frontendReader, buf)
 	if err != nil {
 		return nil, err
 	}
@@ -156,14 +156,14 @@ func (p *Proxy) readServerConn(msgChan chan pgmsg.BackendMessage, errChan chan e
 	header := make([]byte, 5)
 	payload := &bytes.Buffer{}
 	for {
-		_, err := io.ReadFull(p.serverReader, header)
+		_, err := io.ReadFull(p.backendReader, header)
 		if err != nil {
 			errChan <- err
 			return
 		}
 
 		msgSize := int(binary.BigEndian.Uint32(header[1:])) - 4
-		_, err = io.CopyN(payload, p.serverReader, int64(msgSize))
+		_, err = io.CopyN(payload, p.backendReader, int64(msgSize))
 		if err != nil {
 			errChan <- err
 			return
