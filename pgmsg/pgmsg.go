@@ -39,6 +39,8 @@ func ParseFrontend(typeByte byte, body []byte) (FrontendMessage, error) {
 	switch typeByte {
 	case 'p':
 		return ParsePasswordMessage(body)
+	case 'Q':
+		return ParseQuery(body)
 	case 'X':
 		return ParseTerminate(body)
 	default:
