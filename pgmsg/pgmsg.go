@@ -20,6 +20,8 @@ type BackendMessage interface {
 
 func ParseBackend(typeByte byte, body []byte) (BackendMessage, error) {
 	switch typeByte {
+	case 'D':
+		return ParseDataRow(body)
 	case 'E':
 		return ParseErrorResponse(body)
 	case 'K':
