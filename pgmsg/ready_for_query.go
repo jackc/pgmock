@@ -8,6 +8,8 @@ type ReadyForQuery struct {
 	TxStatus byte
 }
 
+func (*ReadyForQuery) Backend() {}
+
 func ParseReadyForQuery(body []byte) (*ReadyForQuery, error) {
 	if len(body) != 1 {
 		return nil, &invalidMessageLenErr{messageType: "ReadyForQuery", expectedLen: 1, actualLen: len(body)}

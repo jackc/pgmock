@@ -11,6 +11,8 @@ type BackendKeyData struct {
 	SecretKey uint32
 }
 
+func (*BackendKeyData) Backend() {}
+
 func ParseBackendKeyData(body []byte) (*BackendKeyData, error) {
 	if len(body) != 8 {
 		return nil, &invalidMessageLenErr{messageType: "BackendKeyData", expectedLen: 8, actualLen: len(body)}

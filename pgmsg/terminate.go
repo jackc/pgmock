@@ -6,6 +6,8 @@ import (
 
 type Terminate struct{}
 
+func (*Terminate) Frontend() {}
+
 func ParseTerminate(body []byte) (*Terminate, error) {
 	if len(body) != 0 {
 		return nil, &invalidMessageLenErr{messageType: "Terminate", expectedLen: 0, actualLen: len(body)}

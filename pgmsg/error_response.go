@@ -28,6 +28,8 @@ type ErrorResponse struct {
 	UnknownFields map[byte]string
 }
 
+func (*ErrorResponse) Backend() {}
+
 func ParseErrorResponse(rawBuf []byte) (*ErrorResponse, error) {
 	var errResp ErrorResponse
 

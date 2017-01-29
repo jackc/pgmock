@@ -9,6 +9,8 @@ type PasswordMessage struct {
 	Password string
 }
 
+func (*PasswordMessage) Frontend() {}
+
 func ParsePasswordMessage(body []byte) (*PasswordMessage, error) {
 	var pm PasswordMessage
 

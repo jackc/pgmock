@@ -17,6 +17,8 @@ type StartupMessage struct {
 	Parameters      map[string]string
 }
 
+func (*StartupMessage) Frontend() {}
+
 func ParseStartupMessage(buf []byte) (*StartupMessage, error) {
 	var msg StartupMessage
 

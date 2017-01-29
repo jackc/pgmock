@@ -12,6 +12,9 @@ type UnknownMessage struct {
 	Payload []byte
 }
 
+func (*UnknownMessage) Backend()  {}
+func (*UnknownMessage) Frontend() {}
+
 func ParseUnknownMessage(t byte, buf []byte) (*UnknownMessage, error) {
 	newBuf := make([]byte, len(buf))
 	copy(newBuf, buf)

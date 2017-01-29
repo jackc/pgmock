@@ -11,6 +11,8 @@ type ParameterStatus struct {
 	Value string
 }
 
+func (*ParameterStatus) Backend() {}
+
 func ParseParameterStatus(rawBuf []byte) (*ParameterStatus, error) {
 	var ps ParameterStatus
 

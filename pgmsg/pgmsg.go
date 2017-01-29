@@ -8,7 +8,17 @@ type Message interface {
 	Encode() ([]byte, error)
 }
 
-func ParseBackend(typeByte byte, body []byte) (Message, error) {
+type FrontendMessage interface {
+	Encode() ([]byte, error)
+	Frontend() // no-op method to distinguish frontend from backend methods
+}
+
+type BackendMessage interface {
+	Encode() ([]byte, error)
+	Backend() // no-op method to distinguish frontend from backend methods
+}
+
+func ParseBackend(typeByte byte, body []byte) (BackendMessage, error) {
 	switch typeByte {
 	case 'E':
 		return ParseErrorResponse(body)
@@ -25,7 +35,7 @@ func ParseBackend(typeByte byte, body []byte) (Message, error) {
 	}
 }
 
-func ParseFrontend(typeByte byte, body []byte) (Message, error) {
+func ParseFrontend(typeByte byte, body []byte) (FrontendMessage, error) {
 	switch typeByte {
 	case 'p':
 		return ParsePasswordMessage(body)

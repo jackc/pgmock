@@ -14,12 +14,20 @@ const (
 )
 
 type AuthenticationOk struct{}
+
+func (*AuthenticationOk) Backend() {}
+
 type AuthenticationCleartextPassword struct{}
+
+func (*AuthenticationCleartextPassword) Backend() {}
+
 type AuthenticationMD5Password struct {
 	Salt [4]byte
 }
 
-func ParseAuthentication(buf []byte) (Message, error) {
+func (*AuthenticationMD5Password) Backend() {}
+
+func ParseAuthentication(buf []byte) (BackendMessage, error) {
 	subType := binary.BigEndian.Uint32(buf[:4])
 
 	switch subType {
