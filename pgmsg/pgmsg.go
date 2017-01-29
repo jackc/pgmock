@@ -28,6 +28,8 @@ func ParseBackend(typeByte byte, body []byte) (BackendMessage, error) {
 		return ParseAuthentication(body)
 	case 'S':
 		return ParseParameterStatus(body)
+	case 'T':
+		return ParseRowDescription(body)
 	case 'Z':
 		return ParseReadyForQuery(body)
 	default:
@@ -56,4 +58,12 @@ type invalidMessageLenErr struct {
 
 func (e *invalidMessageLenErr) Error() string {
 	return fmt.Sprintf("%s body must have length of %d, but it is %d", e.messageType, e.expectedLen, e.actualLen)
+}
+
+type invalidMessageFormatErr struct {
+	messageType string
+}
+
+func (e *invalidMessageFormatErr) Error() string {
+	return fmt.Sprintf("%s body is invalid", e.messageType)
 }
