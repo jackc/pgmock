@@ -39,7 +39,7 @@ func (m *Mock) Send(msg pgmsg.Message) error {
 	return err
 }
 
-func (m *Mock) Receive() (pgmsg.Message, error) {
+func (m *Mock) Receive() (pgmsg.FrontendMessage, error) {
 	header := make([]byte, 5)
 	payload := &bytes.Buffer{}
 

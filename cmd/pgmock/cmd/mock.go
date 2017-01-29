@@ -46,6 +46,47 @@ var mockCmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
+
+			for {
+				msg, err := mock.Receive()
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				if _, ok := msg.(*pgmsg.Query); ok {
+					err = mock.Send(&pgmsg.RowDescription{Fields: []pgmsg.FieldDescription{
+						{
+							Name:         "Hey Jack",
+							DataTypeOID:  23,
+							DataTypeSize: 4,
+							TypeModifier: 4294967295,
+							Format:       pgmsg.TextFormat,
+						},
+					}})
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					err = mock.Send(&pgmsg.DataRow{Values: [][]byte{
+						[]byte("5"),
+					}})
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					err = mock.Send(&pgmsg.CommandComplete{CommandTag: "SELECT 2"})
+					if err != nil {
+						log.Fatal(err)
+					}
+
+					err = mock.Send(&pgmsg.ReadyForQuery{TxStatus: 'I'})
+					if err != nil {
+						log.Fatal(err)
+					}
+				} else {
+					log.Fatal("unexpected message")
+				}
+			}
 		}
 	},
 }
