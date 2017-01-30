@@ -20,6 +20,10 @@ type BackendMessage interface {
 
 func ParseBackend(typeByte byte, body []byte) (BackendMessage, error) {
 	switch typeByte {
+	case '1':
+		return ParseParseComplete(body)
+	case '2':
+		return ParseBindComplete(body)
 	case 'C':
 		return ParseCommandComplete(body)
 	case 'D':
@@ -45,6 +49,8 @@ func ParseFrontend(typeByte byte, body []byte) (FrontendMessage, error) {
 	switch typeByte {
 	case 'D':
 		return ParseDescribe(body)
+	case 'P':
+		return ParseParse(body)
 	case 'p':
 		return ParsePasswordMessage(body)
 	case 'Q':
