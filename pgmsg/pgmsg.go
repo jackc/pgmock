@@ -47,6 +47,8 @@ func ParseBackend(typeByte byte, body []byte) (BackendMessage, error) {
 
 func ParseFrontend(typeByte byte, body []byte) (FrontendMessage, error) {
 	switch typeByte {
+	case 'B':
+		return ParseBind(body)
 	case 'D':
 		return ParseDescribe(body)
 	case 'P':
