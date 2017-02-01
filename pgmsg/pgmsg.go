@@ -38,6 +38,8 @@ func ParseBackend(typeByte byte, body []byte) (BackendMessage, error) {
 		return ParseParameterStatus(body)
 	case 'T':
 		return ParseRowDescription(body)
+	case 't':
+		return ParseParameterDescription(body)
 	case 'Z':
 		return ParseReadyForQuery(body)
 	default:
