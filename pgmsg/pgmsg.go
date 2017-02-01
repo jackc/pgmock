@@ -51,6 +51,8 @@ func ParseFrontend(typeByte byte, body []byte) (FrontendMessage, error) {
 		return ParseBind(body)
 	case 'D':
 		return ParseDescribe(body)
+	case 'E':
+		return ParseExecute(body)
 	case 'P':
 		return ParseParse(body)
 	case 'p':
