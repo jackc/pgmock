@@ -3,9 +3,9 @@ package cmd
 import (
 	"net"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/jackc/pgmock"
-	"github.com/jackc/pgmock/pgmsg"
-	log "github.com/sirupsen/logrus"
+	"github.com/jackc/pgx/pgproto3"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -32,17 +32,17 @@ var mockCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 
-			err = mock.Send(&pgmsg.AuthenticationOk{})
+			err = mock.Send(&pgproto3.AuthenticationOk{})
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			err = mock.Send(&pgmsg.BackendKeyData{ProcessID: 0, SecretKey: 0})
+			err = mock.Send(&pgproto3.BackendKeyData{ProcessID: 0, SecretKey: 0})
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			err = mock.Send(&pgmsg.ReadyForQuery{TxStatus: 'I'})
+			err = mock.Send(&pgproto3.ReadyForQuery{TxStatus: 'I'})
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -53,33 +53,33 @@ var mockCmd = &cobra.Command{
 					log.Fatal(err)
 				}
 
-				if _, ok := msg.(*pgmsg.Query); ok {
-					err = mock.Send(&pgmsg.RowDescription{Fields: []pgmsg.FieldDescription{
+				if _, ok := msg.(*pgproto3.Query); ok {
+					err = mock.Send(&pgproto3.RowDescription{Fields: []pgproto3.FieldDescription{
 						{
 							Name:         "Hey Jack",
 							DataTypeOID:  23,
 							DataTypeSize: 4,
 							TypeModifier: 4294967295,
-							Format:       pgmsg.TextFormat,
+							Format:       pgproto3.TextFormat,
 						},
 					}})
 					if err != nil {
 						log.Fatal(err)
 					}
 
-					err = mock.Send(&pgmsg.DataRow{Values: [][]byte{
+					err = mock.Send(&pgproto3.DataRow{Values: [][]byte{
 						[]byte("5"),
 					}})
 					if err != nil {
 						log.Fatal(err)
 					}
 
-					err = mock.Send(&pgmsg.CommandComplete{CommandTag: "SELECT 2"})
+					err = mock.Send(&pgproto3.CommandComplete{CommandTag: "SELECT 2"})
 					if err != nil {
 						log.Fatal(err)
 					}
 
-					err = mock.Send(&pgmsg.ReadyForQuery{TxStatus: 'I'})
+					err = mock.Send(&pgproto3.ReadyForQuery{TxStatus: 'I'})
 					if err != nil {
 						log.Fatal(err)
 					}

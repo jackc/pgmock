@@ -9,7 +9,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/jackc/pgmock/pgmsg"
+	"github.com/jackc/pgx/pgproto3"
 )
 
 type Proxy struct {
@@ -35,11 +35,11 @@ func (p *Proxy) Run() error {
 	defer p.Close()
 
 	frontendErrChan := make(chan error, 1)
-	frontendMsgChan := make(chan pgmsg.FrontendMessage)
+	frontendMsgChan := make(chan pgproto3.FrontendMessage)
 	go p.readClientConn(frontendMsgChan, frontendErrChan)
 
 	backendErrChan := make(chan error, 1)
-	backendMsgChan := make(chan pgmsg.BackendMessage)
+	backendMsgChan := make(chan pgproto3.BackendMessage)
 	go p.readServerConn(backendMsgChan, backendErrChan)
 
 	for {
@@ -96,7 +96,7 @@ func (p *Proxy) Close() error {
 	return backendCloseErr
 }
 
-func (p *Proxy) readClientConn(msgChan chan pgmsg.FrontendMessage, errChan chan error) {
+func (p *Proxy) readClientConn(msgChan chan pgproto3.FrontendMessage, errChan chan error) {
 	startupMessage, err := p.acceptStartupMessage()
 	if err != nil {
 		errChan <- err
@@ -121,7 +121,7 @@ func (p *Proxy) readClientConn(msgChan chan pgmsg.FrontendMessage, errChan chan 
 			return
 		}
 
-		msg, err := pgmsg.ParseFrontend(header[0], payload.Bytes())
+		msg, err := pgproto3.ParseFrontend(header[0], payload.Bytes())
 		if err != nil {
 			errChan <- err
 			return
@@ -133,7 +133,7 @@ func (p *Proxy) readClientConn(msgChan chan pgmsg.FrontendMessage, errChan chan 
 	}
 }
 
-func (p *Proxy) acceptStartupMessage() (*pgmsg.StartupMessage, error) {
+func (p *Proxy) acceptStartupMessage() (*pgproto3.StartupMessage, error) {
 	buf := make([]byte, 4)
 
 	_, err := io.ReadFull(p.frontendReader, buf)
@@ -149,10 +149,10 @@ func (p *Proxy) acceptStartupMessage() (*pgmsg.StartupMessage, error) {
 		return nil, err
 	}
 
-	return pgmsg.ParseStartupMessage(buf)
+	return pgproto3.ParseStartupMessage(buf)
 }
 
-func (p *Proxy) readServerConn(msgChan chan pgmsg.BackendMessage, errChan chan error) {
+func (p *Proxy) readServerConn(msgChan chan pgproto3.BackendMessage, errChan chan error) {
 	header := make([]byte, 5)
 	payload := &bytes.Buffer{}
 	for {
@@ -169,7 +169,7 @@ func (p *Proxy) readServerConn(msgChan chan pgmsg.BackendMessage, errChan chan e
 			return
 		}
 
-		msg, err := pgmsg.ParseBackend(header[0], payload.Bytes())
+		msg, err := pgproto3.ParseBackend(header[0], payload.Bytes())
 		if err != nil {
 			errChan <- err
 			return
