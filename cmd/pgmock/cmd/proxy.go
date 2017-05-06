@@ -3,8 +3,8 @@ package cmd
 import (
 	"net"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/jackc/pgmock"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -31,7 +31,10 @@ var proxyCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 
-			proxy := pgmock.NewProxy(clientConn, serverConn)
+			proxy, err := pgmock.NewProxy(clientConn, serverConn)
+			if err != nil {
+				log.Fatal(err)
+			}
 
 			err = proxy.Run()
 			log.Error(err)
