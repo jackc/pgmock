@@ -42,11 +42,13 @@ func (p *Proxy) Run() error {
 
 	frontendErrChan := make(chan error, 1)
 	frontendMsgChan := make(chan pgproto3.FrontendMessage)
-	go p.readClientConn(frontendMsgChan, frontendErrChan)
+	frontendNextChan := make(chan struct{})
+	go p.readClientConn(frontendMsgChan, frontendNextChan, frontendErrChan)
 
 	backendErrChan := make(chan error, 1)
 	backendMsgChan := make(chan pgproto3.BackendMessage)
-	go p.readServerConn(backendMsgChan, backendErrChan)
+	backendNextChan := make(chan struct{})
+	go p.readServerConn(backendMsgChan, backendNextChan, backendErrChan)
 
 	for {
 		select {
@@ -62,6 +64,7 @@ func (p *Proxy) Run() error {
 			if err != nil {
 				return err
 			}
+			frontendNextChan <- struct{}{}
 		case msg := <-backendMsgChan:
 			fmt.Print("backend: ")
 			buf, err := json.Marshal(msg)
@@ -74,6 +77,7 @@ func (p *Proxy) Run() error {
 			if err != nil {
 				return err
 			}
+			backendNextChan <- struct{}{}
 		case err := <-frontendErrChan:
 			return err
 		case err := <-backendErrChan:
@@ -92,7 +96,7 @@ func (p *Proxy) Close() error {
 	return backendCloseErr
 }
 
-func (p *Proxy) readClientConn(msgChan chan pgproto3.FrontendMessage, errChan chan error) {
+func (p *Proxy) readClientConn(msgChan chan pgproto3.FrontendMessage, nextChan chan struct{}, errChan chan error) {
 	startupMessage, err := p.backend.ReceiveStartupMessage()
 	if err != nil {
 		errChan <- err
@@ -100,6 +104,7 @@ func (p *Proxy) readClientConn(msgChan chan pgproto3.FrontendMessage, errChan ch
 	}
 
 	msgChan <- startupMessage
+	<-nextChan
 
 	for {
 		msg, err := p.backend.Receive()
@@ -109,10 +114,11 @@ func (p *Proxy) readClientConn(msgChan chan pgproto3.FrontendMessage, errChan ch
 		}
 
 		msgChan <- msg
+		<-nextChan
 	}
 }
 
-func (p *Proxy) readServerConn(msgChan chan pgproto3.BackendMessage, errChan chan error) {
+func (p *Proxy) readServerConn(msgChan chan pgproto3.BackendMessage, nextChan chan struct{}, errChan chan error) {
 	for {
 		msg, err := p.frontend.Receive()
 		if err != nil {
@@ -121,5 +127,7 @@ func (p *Proxy) readServerConn(msgChan chan pgproto3.BackendMessage, errChan cha
 		}
 
 		msgChan <- msg
+
+		<-nextChan
 	}
 }
