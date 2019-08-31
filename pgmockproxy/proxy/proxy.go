@@ -1,11 +1,11 @@
-package pgmock
+package proxy
 
 import (
 	"encoding/json"
 	"fmt"
 	"net"
 
-	"github.com/jackc/pgx/pgproto3"
+	"github.com/jackc/pgproto3/v2"
 )
 
 type Proxy struct {
@@ -16,15 +16,9 @@ type Proxy struct {
 	backendConn  net.Conn
 }
 
-func NewProxy(frontendConn, backendConn net.Conn) (*Proxy, error) {
-	backend, err := pgproto3.NewBackend(frontendConn, frontendConn)
-	if err != nil {
-		return nil, err
-	}
-	frontend, err := pgproto3.NewFrontend(backendConn, backendConn)
-	if err != nil {
-		return nil, err
-	}
+func NewProxy(frontendConn, backendConn net.Conn) *Proxy {
+	backend := pgproto3.NewBackend(pgproto3.NewChunkReader(frontendConn), frontendConn)
+	frontend := pgproto3.NewFrontend(pgproto3.NewChunkReader(backendConn), backendConn)
 
 	proxy := &Proxy{
 		frontend: frontend,
@@ -34,7 +28,7 @@ func NewProxy(frontendConn, backendConn net.Conn) (*Proxy, error) {
 		backendConn:  backendConn,
 	}
 
-	return proxy, nil
+	return proxy
 }
 
 func (p *Proxy) Run() error {
@@ -53,12 +47,11 @@ func (p *Proxy) Run() error {
 	for {
 		select {
 		case msg := <-frontendMsgChan:
-			fmt.Print("frontend: ")
 			buf, err := json.Marshal(msg)
 			if err != nil {
 				return err
 			}
-			fmt.Println(string(buf))
+			fmt.Println("F", string(buf))
 
 			err = p.frontend.Send(msg)
 			if err != nil {
@@ -66,12 +59,11 @@ func (p *Proxy) Run() error {
 			}
 			frontendNextChan <- struct{}{}
 		case msg := <-backendMsgChan:
-			fmt.Print("backend: ")
 			buf, err := json.Marshal(msg)
 			if err != nil {
 				return err
 			}
-			fmt.Println(string(buf))
+			fmt.Println("B", string(buf))
 
 			err = p.backend.Send(msg)
 			if err != nil {
