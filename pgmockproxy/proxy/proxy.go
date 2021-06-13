@@ -3,7 +3,9 @@ package proxy
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
+	"os"
 
 	"github.com/jackc/pgproto3/v2"
 )
@@ -32,6 +34,11 @@ func NewProxy(frontendConn, backendConn net.Conn) *Proxy {
 }
 
 func (p *Proxy) Run() error {
+	return p.Stream(os.Stdout)
+}
+
+// Stream representation of the wire protocol to writer.
+func (p *Proxy) Stream(w io.Writer) error {
 	defer p.Close()
 
 	frontendErrChan := make(chan error, 1)
@@ -51,7 +58,7 @@ func (p *Proxy) Run() error {
 			if err != nil {
 				return err
 			}
-			fmt.Println("F", string(buf))
+			fmt.Fprintln(w, "F", string(buf))
 
 			err = p.frontend.Send(msg)
 			if err != nil {
@@ -63,7 +70,7 @@ func (p *Proxy) Run() error {
 			if err != nil {
 				return err
 			}
-			fmt.Println("B", string(buf))
+			fmt.Fprintln(w, "B", string(buf))
 
 			err = p.backend.Send(msg)
 			if err != nil {
