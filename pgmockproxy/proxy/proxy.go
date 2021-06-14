@@ -118,6 +118,15 @@ func (p *Proxy) readServerConn(msgChan chan pgproto3.BackendMessage, nextChan ch
 			return
 		}
 
+		if _, ok := msg.(pgproto3.AuthenticationResponseMessage); ok {
+			// set the authentication type so the next backend.Receive() will
+			// properly decode the appropriate 'p' message.
+			if err := p.backend.SetAuthType(p.frontend.GetAuthType()); err != nil {
+				errChan <- err
+				return
+			}
+		}
+
 		msgChan <- msg
 
 		<-nextChan
