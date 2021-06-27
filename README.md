@@ -40,3 +40,6 @@ B {"Type":"CommandComplete","CommandTag":"SELECT 5"}
 B {"Type":"ReadyForQuery","TxStatus":"I"}
 F {"Type":"Terminate"}
 ```
+
+## Reference
+* [PostgreSQL: Message Flow: Frontend/Backend Protocol](https://www.postgresql.org/docs/current/protocol-flow.html)

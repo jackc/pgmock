@@ -1,0 +1,64 @@
+F {"Type":"StartupMessage","ProtocolVersion":196608,"Parameters":{"database":"test_data","user":"hatch"}}
+B {"Type":"AuthenticationCleartextPassword"}
+F {"Type":"PasswordMessage","Password":"abcdef"}
+B {"Type":"AuthenticationOK"}
+B {"Type":"ParameterStatus","Name":"application_name","Value":""}
+B {"Type":"ParameterStatus","Name":"client_encoding","Value":"UTF8"}
+B {"Type":"ParameterStatus","Name":"DateStyle","Value":"ISO, MDY"}
+B {"Type":"ParameterStatus","Name":"integer_datetimes","Value":"on"}
+B {"Type":"ParameterStatus","Name":"IntervalStyle","Value":"postgres"}
+B {"Type":"ParameterStatus","Name":"is_superuser","Value":"off"}
+B {"Type":"ParameterStatus","Name":"server_encoding","Value":"UTF8"}
+B {"Type":"ParameterStatus","Name":"server_version","Value":"12.3"}
+B {"Type":"ParameterStatus","Name":"session_authorization","Value":"hatch"}
+B {"Type":"ParameterStatus","Name":"standard_conforming_strings","Value":"on"}
+B {"Type":"ParameterStatus","Name":"TimeZone","Value":"Europe/Amsterdam"}
+B {"Type":"BackendKeyData","ProcessID":80843,"SecretKey":2413357136}
+B {"Type":"ReadyForQuery","TxStatus":"I"}
+F {"Type":"Parse","Name":"lrupsc_1_0","Query":"INSERT INTO posts (id, title, body) VALUES ( $1, $2, $3 )","ParameterOIDs":null}
+F {"Type":"Describe","ObjectType":"S","Name":"lrupsc_1_0"}
+F {"Type":"Sync"}
+B {"Type":"ParseComplete"}
+B {"Type":"ParameterDescription","ParameterOIDs":[25,25,25]}
+B {"Type":"NoData"}
+B {"Type":"ReadyForQuery","TxStatus":"I"}
+F {"Type":"Bind","DestinationPortal":"","PreparedStatement":"lrupsc_1_0","ParameterFormatCodes":[0,0,0],"Parameters":[{"text":"abc"},{"text":"Fox"},{"text":"The quick brown fox jumps over the lazy dog."}],"ResultFormatCodes":[]}
+F {"Type":"Describe","ObjectType":"P","Name":""}
+F {"Type":"Execute","Portal":"","MaxRows":0}
+F {"Type":"Sync"}
+B {"Type":"BindComplete"}
+B {"Type":"NoData"}
+B {"Type":"CommandComplete","CommandTag":"INSERT 0 1"}
+B {"Type":"ReadyForQuery","TxStatus":"I"}
+F {"Type":"Parse","Name":"lrupsc_1_1","Query":"SELECT id, title, body, created_at, modified_at FROM posts WHERE id = $1","ParameterOIDs":null}
+F {"Type":"Describe","ObjectType":"S","Name":"lrupsc_1_1"}
+F {"Type":"Sync"}
+B {"Type":"ParseComplete"}
+B {"Type":"ParameterDescription","ParameterOIDs":[25]}
+B {"Type":"RowDescription","Fields":[{"Name":"id","TableOID":39639,"TableAttributeNumber":1,"DataTypeOID":25,"DataTypeSize":-1,"TypeModifier":-1,"Format":0},{"Name":"title","TableOID":39639,"TableAttributeNumber":3,"DataTypeOID":25,"DataTypeSize":-1,"TypeModifier":-1,"Format":0},{"Name":"body","TableOID":39639,"TableAttributeNumber":4,"DataTypeOID":25,"DataTypeSize":-1,"TypeModifier":-1,"Format":0},{"Name":"created_at","TableOID":39639,"TableAttributeNumber":5,"DataTypeOID":1184,"DataTypeSize":8,"TypeModifier":-1,"Format":0},{"Name":"modified_at","TableOID":39639,"TableAttributeNumber":6,"DataTypeOID":1184,"DataTypeSize":8,"TypeModifier":-1,"Format":0}]}
+B {"Type":"ReadyForQuery","TxStatus":"I"}
+F {"Type":"Bind","DestinationPortal":"","PreparedStatement":"lrupsc_1_1","ParameterFormatCodes":[0],"Parameters":[{"text":"abc"}],"ResultFormatCodes":[0,0,0,1,1]}
+F {"Type":"Describe","ObjectType":"P","Name":""}
+F {"Type":"Execute","Portal":"","MaxRows":0}
+F {"Type":"Sync"}
+B {"Type":"BindComplete"}
+B {"Type":"RowDescription","Fields":[{"Name":"id","TableOID":39639,"TableAttributeNumber":1,"DataTypeOID":25,"DataTypeSize":-1,"TypeModifier":-1,"Format":0},{"Name":"title","TableOID":39639,"TableAttributeNumber":3,"DataTypeOID":25,"DataTypeSize":-1,"TypeModifier":-1,"Format":0},{"Name":"body","TableOID":39639,"TableAttributeNumber":4,"DataTypeOID":25,"DataTypeSize":-1,"TypeModifier":-1,"Format":0},{"Name":"created_at","TableOID":39639,"TableAttributeNumber":5,"DataTypeOID":1184,"DataTypeSize":8,"TypeModifier":-1,"Format":1},{"Name":"modified_at","TableOID":39639,"TableAttributeNumber":6,"DataTypeOID":1184,"DataTypeSize":8,"TypeModifier":-1,"Format":1}]}
+B {"Type":"DataRow","Values":[{"text":"abc"},{"text":"Fox"},{"text":"The quick brown fox jumps over the lazy dog."},{"binary":"000267ae8408ca48"},{"binary":"000267ae8408ca48"}]}
+B {"Type":"CommandComplete","CommandTag":"SELECT 1"}
+B {"Type":"ReadyForQuery","TxStatus":"I"}
+F {"Type":"Parse","Name":"lrupsc_1_2","Query":"DELETE FROM posts WHERE id = $1","ParameterOIDs":null}
+F {"Type":"Describe","ObjectType":"S","Name":"lrupsc_1_2"}
+F {"Type":"Sync"}
+B {"Type":"ParseComplete"}
+B {"Type":"ParameterDescription","ParameterOIDs":[25]}
+B {"Type":"NoData"}
+B {"Type":"ReadyForQuery","TxStatus":"I"}
+F {"Type":"Bind","DestinationPortal":"","PreparedStatement":"lrupsc_1_2","ParameterFormatCodes":[0],"Parameters":[{"text":"abc"}],"ResultFormatCodes":[]}
+F {"Type":"Describe","ObjectType":"P","Name":""}
+F {"Type":"Execute","Portal":"","MaxRows":0}
+F {"Type":"Sync"}
+B {"Type":"BindComplete"}
+B {"Type":"NoData"}
+B {"Type":"CommandComplete","CommandTag":"DELETE 1"}
+B {"Type":"ReadyForQuery","TxStatus":"I"}
+F {"Type":"Terminate"}
